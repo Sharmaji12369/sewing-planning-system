@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.local
+frontend/.next/
+frontend/.next-test/
+frontend/.next-b/
+frontend/out/
+frontend/next-env.d.ts
+*.log
+.DS_Store
+tools/
+service/logs/
+service/SewingHost.exe
+service/SewingHost-error.txt
