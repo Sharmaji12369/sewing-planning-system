@@ -49,6 +49,8 @@ export const MILESTONES = [
 /** Post-production: packing is due this many days after the order is complete (PACKING_DAYS). */
 export const PACKING_DAYS = 4;
 export type MilestoneKey = (typeof MILESTONES)[number]["key"];
+/** Cutting and accessories can be ticked only once fabric is (MILESTONE_AFTER in planning.ts; the server checks too). */
+export const MILESTONE_AFTER: Partial<Record<MilestoneKey, MilestoneKey>> = { cutting: "fabric", accessories: "fabric" };
 
 /** Pre-production still to tick. Production can be logged only once there is none (the server checks too). */
 export function milestonesMissing(o: Order): string[] {

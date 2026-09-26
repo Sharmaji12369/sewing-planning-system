@@ -57,7 +57,7 @@ Change a required date, log a slow day or mark a holiday, and every screen - the
 1. **Take the order.** Qty and required delivery date are enough. The line and the expected scheduling date can wait until they are known; until both are there the order is *not scheduled* - it holds no line, and nothing can be ticked or logged against it (the API refuses, and each page explains with a popup).
 2. **Place it.** As the form is filled in, the **advisor** ranks all ten lines and one click takes its pick - the line and the date it comes free.
 3. **Book it.** An order not started books its line from its start date to its required date. A clash with another order is refused on save, inside a transaction, with the day the line is free and the lines that are free now.
-4. **Prepare it.** Fabric is due 25 days before the start, cutting and accessories 7. Production stays locked until all three are ticked.
+4. **Prepare it.** Fabric is due 25 days before the start, cutting and accessories 7 - and those two can be ticked only once fabric has arrived. Production stays locked until all three are ticked.
 5. **Make it.** Each day's output re-times the order: a running order holds its line until its balance is done at its real pace, so a faster pace frees days for the next order and a slower one pushes the queue behind it back.
 6. **Pack it.** Packing is due four days after the last piece.
 

@@ -279,12 +279,29 @@ export const MILESTONE_LABEL: Record<MilestoneKey, string> = {
   fabric: 'Fabric received', cutting: 'Cutting', accessories: 'Accessories',
 };
 
+const doneAt = (o: Order, k: MilestoneKey): string | null =>
+  ({ fabric: o.fabricReceivedAt, cutting: o.cuttingDoneAt, accessories: o.accessoriesReceivedAt })[k];
+
 /** Pre-production not yet ticked. Production can be logged only once this is empty. */
 export function milestonesMissing(o: Order): MilestoneKey[] {
-  const done: Record<MilestoneKey, string | null> = {
-    fabric: o.fabricReceivedAt, cutting: o.cuttingDoneAt, accessories: o.accessoriesReceivedAt,
-  };
-  return MILESTONES.filter((k) => !done[k]);
+  return MILESTONES.filter((k) => !doneAt(o, k));
+}
+
+/**
+ * The tick each milestone waits for (agreed 26 Sep 2026): cutting and
+ * accessories can be ticked only once fabric has been received.
+ */
+export const MILESTONE_AFTER: Partial<Record<MilestoneKey, MilestoneKey>> = { cutting: 'fabric', accessories: 'fabric' };
+
+/** The milestone that has to be ticked before `key` can be - null when `key` can be ticked now. */
+export function tickBlockedBy(o: Order, key: MilestoneKey): MilestoneKey | null {
+  const first = MILESTONE_AFTER[key];
+  return first && !doneAt(o, first) ? first : null;
+}
+
+/** Ticks that follow `key` and are in: `key` cannot be cleared while they stand. */
+export function clearBlockedBy(o: Order, key: MilestoneKey): MilestoneKey[] {
+  return MILESTONES.filter((k) => MILESTONE_AFTER[k] === key && doneAt(o, k));
 }
 /** Working days kept free before the calculated start. */
 export const START_BUFFER_DAYS = 1;

@@ -60,7 +60,8 @@ Answer ONLY from the BOARD data in this conversation. It is today's live plan, w
   ("needs N/day", "buffer", "expected completion", "free from"). If a figure you want is not there, say so.
 - Only raise problems the board shows - under RAISED BY THE BOARD, or plainly in an order's own figures. Never invent a
   problem or tell the planner to check for one that is not in the data. If little is wrong, say so.
-- Pre-production "done" means ticked; only "NOT done" is missing.
+- Pre-production "done" means ticked; only "NOT done" is missing. Fabric comes first: cutting and accessories can be
+  ticked only after fabric received is ticked.
 - Idle days are days marked as not worked (holidays, power cuts): capacity lost, not a gap to fill with work.
 - An order marked NOT SCHEDULED has no line and/or no expected scheduling date yet. It books no line and nothing can be
   ticked or logged for it until both are filled in (in Orders, or by dragging it onto the Line calendar).

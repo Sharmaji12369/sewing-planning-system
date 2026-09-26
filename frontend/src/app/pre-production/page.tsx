@@ -13,7 +13,7 @@ import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Guard } from "@/components/guard";
 import {
-  api, ApiError, lineName, MILESTONES, refreshAll, useCan, useOrders,
+  api, ApiError, lineName, MILESTONE_AFTER, MILESTONES, refreshAll, useCan, useOrders,
   type MilestoneKey, type PlannedOrder, type PreProduction,
 } from "@/lib/api";
 import { fmtDate, fmtDay, fmtNum } from "@/lib/format";
@@ -117,13 +117,20 @@ function PreProduction() {
                     </div>
                     <div className="mt-1 text-xs text-muted-foreground">Due {fmtDay(o.requiredDate)}</div>
                   </TableCell>
-                  {MILESTONES.map((m) => (
-                    <TableCell key={m.key} className="border-l pl-4">
-                      <MilestoneCell ms={pp[m.key]} canEdit={canEdit} canUndo={canEdit && o.plan.produced === 0}
-                        onTick={() => tick(o, m.key, m.label)}
-                        onUndo={() => setUndo({ order: o, key: m.key, label: m.label })} />
-                    </TableCell>
-                  ))}
+                  {MILESTONES.map((m) => {
+                    // Cutting and accessories wait for fabric; fabric stays while either is ticked on top of it.
+                    const first = MILESTONE_AFTER[m.key];
+                    const waiting = !!first && !pp[first].doneAt;
+                    const underOthers = MILESTONES.some((x) => MILESTONE_AFTER[x.key] === m.key && pp[x.key].doneAt);
+                    return (
+                      <TableCell key={m.key} className="border-l pl-4">
+                        <MilestoneCell ms={pp[m.key]} canEdit={canEdit} canUndo={canEdit && o.plan.produced === 0 && !underOthers}
+                          blocked={waiting ? "After fabric received" : undefined}
+                          onTick={() => tick(o, m.key, m.label)}
+                          onUndo={() => setUndo({ order: o, key: m.key, label: m.label })} />
+                      </TableCell>
+                    );
+                  })}
                   <TableCell className="border-l pr-4 pl-4">
                     {pp.overall !== "none" && (
                       <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase", OVERALL[pp.overall].style)}>
@@ -149,6 +156,7 @@ function PreProduction() {
 
       <p className="mt-3 text-xs text-muted-foreground">
         {canEdit && <>Press <b>Mark done</b> when an item arrives - today&apos;s date and time are saved. </>}
+        Fabric comes first: cutting and accessories can be ticked once fabric received is.
         Start date = order qty ÷ target per day, counted back from the required date, less 1 buffer day. An order with no
         line or expected scheduling date yet has no start date, so nothing is due - and nothing can be ticked until both
         are filled in. Production can be logged only once all three are ticked, and after that the ticks stay.

@@ -9,7 +9,7 @@ import {
 } from '../src/dates';
 import {
   buildCalendar, buildLineCalendar, dashboardKpis, entryRunningTotals, lineCheck, milestonesMissing, planBoard, planOrder,
-  scheduleMissing, schedulingDateFor,
+  scheduleMissing, schedulingDateFor, tickBlockedBy, clearBlockedBy,
   type Entry, type IdleDay, type Order, type OrderPlan, type Settings,
 } from '../src/planning';
 
@@ -564,6 +564,21 @@ test('production needs fabric, cutting and accessories all ticked', () => {
   assert.deepEqual(milestonesMissing(order({})), ['fabric', 'cutting', 'accessories']);
   assert.deepEqual(milestonesMissing(order({ fabricReceivedAt: t, accessoriesReceivedAt: t })), ['cutting']);
   assert.deepEqual(milestonesMissing(order({ fabricReceivedAt: t, cuttingDoneAt: t, accessoriesReceivedAt: t })), []);
+});
+
+test('cutting and accessories can be ticked only after fabric - and fabric cannot be cleared under them', () => {
+  const t = new Date().toISOString();
+  const none = order({});
+  assert.equal(tickBlockedBy(none, 'fabric'), null);
+  assert.equal(tickBlockedBy(none, 'cutting'), 'fabric');
+  assert.equal(tickBlockedBy(none, 'accessories'), 'fabric');
+  const fabric = order({ fabricReceivedAt: t });
+  assert.equal(tickBlockedBy(fabric, 'cutting'), null);
+  assert.equal(tickBlockedBy(fabric, 'accessories'), null);
+  // Fabric comes off only once nothing ticked after it is left.
+  assert.deepEqual(clearBlockedBy(fabric, 'fabric'), []);
+  assert.deepEqual(clearBlockedBy(order({ fabricReceivedAt: t, cuttingDoneAt: t, accessoriesReceivedAt: t }), 'fabric'), ['cutting', 'accessories']);
+  assert.deepEqual(clearBlockedBy(order({ fabricReceivedAt: t, cuttingDoneAt: t }), 'cutting'), []);
 });
 
 // --- not scheduled: no line or no expected scheduling date yet (25 Sep 2026) ------

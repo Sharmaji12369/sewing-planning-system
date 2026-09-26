@@ -15,8 +15,8 @@ import { migrate } from './migrate';
 import { isPermission, PERMISSIONS } from './permissions';
 import {
   BASE_SETTINGS, buildCalendar, buildLineCalendar, dashboardKpis, entryRunningTotals, isScheduled, LINE_COUNT, lineCheck,
-  MILESTONE_LABEL, MILESTONES, milestonesMissing, planBoard, planOrder, scheduleMissing, schedulingDateFor,
-  type MilestoneKey, type Order, type OrderPlan, type Settings,
+  clearBlockedBy, MILESTONE_LABEL, MILESTONES, milestonesMissing, planBoard, planOrder, scheduleMissing, schedulingDateFor,
+  tickBlockedBy, type MilestoneKey, type Order, type OrderPlan, type Settings,
 } from './planning';
 import * as repo from './repo';
 import * as users from './repo-users';
@@ -558,6 +558,11 @@ app.post('/api/orders/:id/milestones/:key', need('preproduction.edit'), async (r
   const order = await repo.getOrder(id);
   if (!order) throw new HttpError(404, 'Order not found');
   assertScheduled(order, `ticking ${MILESTONE_LABEL[key]}`);
+  const first = tickBlockedBy(order, key);
+  if (first) {
+    throw new HttpError(400, `${MILESTONE_LABEL[key]} can be ticked only after ${MILESTONE_LABEL[first]}. `
+      + `Tick ${MILESTONE_LABEL[first]} for ${order.orderNo} first.`, { code: 'tick-order', first });
+  }
   res.json(await repo.setMilestone(id, key, true));
 });
 
@@ -572,6 +577,13 @@ app.delete('/api/orders/:id/milestones/:key', need('preproduction.edit'), async 
   if (!order) throw new HttpError(404, 'Order not found');
   if ((await repo.orderLogged(id, null)) > 0) {
     throw new HttpError(400, `Production is already logged for ${order.orderNo}, so its pre-production ticks stay.`);
+  }
+  // Cutting and accessories rest on fabric: clear them first.
+  const resting = clearBlockedBy(order, key);
+  if (resting.length) {
+    const names = resting.map((k) => MILESTONE_LABEL[k]).join(' and ');
+    throw new HttpError(400, `${names} ${resting.length === 1 ? 'is' : 'are'} ticked for ${order.orderNo}, and can only follow `
+      + `${MILESTONE_LABEL[key]}. Clear ${resting.length === 1 ? 'it' : 'them'} first.`);
   }
   res.json(await repo.setMilestone(id, key, false));
 });
